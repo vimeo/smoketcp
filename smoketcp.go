@@ -66,5 +66,5 @@ func main() {
 	s, err := statsd.Dial(os.Args[1], fmt.Sprintf("smoketcp.%s", hostname))
 	dieIfError(err)
 	defer s.Close()
-	doEvery(60*time.Second, process_targets, s)
+	doEvery(time.Second, process_targets, s)
 }
