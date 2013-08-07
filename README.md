@@ -1,6 +1,6 @@
 # Smoketcp
 
-Smokeping like tcp connectivity tester, reports to statsd so you get aggregate statistics into graphite.
+Smokeping-like tcp connectivity tester, reports to statsd so you get aggregate statistics into graphite.
 Written in Golang.
 
 
@@ -11,3 +11,7 @@ Create a "targets" file that looks like:
 <host>:<port>
 ```
 then just `go build smoketcp.go` and `./smoketcp <statsd_host>:<statsd_port>` and boom.
+
+Every second it tests every entry (in parallel), and reports errors and time-to-connection to statsd.
+Statsd then aggregates across the flushInterval (in our case 60s) and stores in graphite per target the errors rate,
+and the mean, lower, upper, upper_90 etc values.
