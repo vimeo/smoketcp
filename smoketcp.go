@@ -49,14 +49,14 @@ func test(target string, s *statsd.Client, bucket string) {
 	conn, err := net.Dial("tcp", hostport)
 	if err != nil {
 		fmt.Println("connect error", target)
-		s.Inc(fmt.Sprintf("%s.smokeping.%s.%s.dial_failed", bucket, host, port), 1, 1)
+		s.Inc(fmt.Sprintf("%s.%s.%s.dial_failed", bucket, host, port), 1, 1)
 		return
 	}
 	duration := time.Since(pre)
 	subhost := strings.Replace(host, ".", "_", -1)
 	ms := int64(duration / time.Millisecond)
-	fmt.Printf("%s.smokeping.%s.%s.duration %d\n", bucket, subhost, port, ms)
-	s.Timing(fmt.Sprintf("%s.smokeping.%s.%s", bucket, host, port), ms, 1)
+	fmt.Printf("%s.%s.%s.duration %d\n", bucket, subhost, port, ms)
+	s.Timing(fmt.Sprintf("%s.%s.%s", bucket, host, port), ms, 1)
 	conn.Close()
 }
 
@@ -69,7 +69,7 @@ func main() {
 
 	hostname, err := os.Hostname()
 	dieIfError(err)
-	s, err := statsd.New(os.Args[1], fmt.Sprintf("smoketcp.%s", hostname))
+	s, err := statsd.Dial(os.Args[1], fmt.Sprintf("smoketcp.%s", hostname))
 	dieIfError(err)
 	bucket := os.Args[2]
 	defer s.Close()
