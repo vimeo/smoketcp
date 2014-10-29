@@ -17,14 +17,14 @@ func dieIfError(err error) {
 	}
 }
 
-func doEvery(d time.Duration, s *statsd.Client, bucket string) {
-	process_targets(s, bucket)
+func doEvery(d time.Duration, f func(*statsd.Client), s *statsd.Client) {
+	f(s)
 	for _ = range time.Tick(d) {
-		process_targets(s, bucket)
+		f(s)
 	}
 }
 
-func process_targets(s *statsd.Client, bucket string) {
+func process_targets(s *statsd.Client) {
 	content, err := ioutil.ReadFile("targets")
 	if err != nil {
 		fmt.Println("couldn't open targets file")
@@ -35,28 +35,27 @@ func process_targets(s *statsd.Client, bucket string) {
 		if len(target) < 1 {
 			continue
 		}
-		go test(target, s, bucket)
+		go test(target, s)
 	}
 }
 
-func test(target string, s *statsd.Client, bucket string) {
+func test(target string, s *statsd.Client) {
 	tuple := strings.Split(target, ":")
 	host := tuple[0]
 	port := tuple[1]
-	hostport := strings.Join([]string{host, port}, ":")
+	subhost := strings.Replace(host, ".", "_", -1)
 
 	pre := time.Now()
-	conn, err := net.Dial("tcp", hostport)
+	conn, err := net.Dial("tcp", target)
 	if err != nil {
 		fmt.Println("connect error", target)
-		s.Inc(fmt.Sprintf("%s.%s.%s.dial_failed", bucket, host, port), 1, 1)
+		s.Inc(fmt.Sprintf("%s.%s.dial_failed", subhost, port), 1, 1)
 		return
 	}
 	duration := time.Since(pre)
-	subhost := strings.Replace(host, ".", "_", -1)
 	ms := int64(duration / time.Millisecond)
-	fmt.Printf("%s.%s.%s.duration %d\n", bucket, subhost, port, ms)
-	s.Timing(fmt.Sprintf("%s.%s.%s", bucket, host, port), ms, 1)
+	fmt.Printf("%s.%s.duration %d\n", subhost, port, ms)
+	s.Timing(fmt.Sprintf("%s.%s", subhost, port), ms, 1)
 	conn.Close()
 }
 
@@ -67,11 +66,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	hostname, err := os.Hostname()
+	s, err := statsd.Dial(os.Args[1], fmt.Sprintf("%s", os.Args[2]))
 	dieIfError(err)
-	s, err := statsd.Dial(os.Args[1], fmt.Sprintf("smoketcp.%s", hostname))
-	dieIfError(err)
-	bucket := os.Args[2]
 	defer s.Close()
-	doEvery(time.Second, s, bucket)
+	doEvery(time.Second, process_targets, s)
 }
