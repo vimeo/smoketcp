@@ -63,7 +63,7 @@ func test(target string, s *statsd.Client, bucket string) {
 func main() {
 	if len(os.Args) < 3 {
 		fmt.Println("Usage: smoketcp <statsd_host>:<statsd_port> <bucket_prefix>")
-		fmt.Println("\nEx: smoketcp statsd.cashstar.net:8125 PROD.us-east-1.dw1")
+		fmt.Println("\nEx: smoketcp statsd.example.com:8125 Location.for.smokeping.values")
 		os.Exit(1)
 	}
 
