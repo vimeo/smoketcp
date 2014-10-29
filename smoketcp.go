@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/cactus/go-statsd-client/statsd"
 	"io/ioutil"
@@ -60,13 +61,12 @@ func test(target string, s *statsd.Client) {
 }
 
 func main() {
-	if len(os.Args) < 3 {
-		fmt.Println("Usage: smoketcp <statsd_host>:<statsd_port> <bucket_prefix>")
-		fmt.Println("\nEx: smoketcp statsd.example.com:8125 Location.for.smokeping.values")
-		os.Exit(1)
-	}
+  var statsd_host = flag.String("statsd_host", "localhost", "Statsd Hostname")
+  var statsd_port = flag.String("statsd_port", "8125", "Statsd port")
+  var bucket = flag.String("bucket", "smoketcp", "Graphite bucket prefix")
+  flag.Parse()
 
-	s, err := statsd.Dial(os.Args[1], fmt.Sprintf("%s", os.Args[2]))
+	s, err := statsd.Dial(fmt.Sprintf("%s:%s", *statsd_host, *statsd_port), fmt.Sprintf("%s", *bucket))
 	dieIfError(err)
 	defer s.Close()
 	doEvery(time.Second, process_targets, s)
