@@ -29,7 +29,7 @@ func process_targets(s *statsd.Client, target_file string, debug bool) {
 	content, err := ioutil.ReadFile(target_file)
 	if err != nil {
 		if debug {
-			fmt.Println("couldn't open targets file: %s", target_file)
+			fmt.Println("couldn't open targets file:", target_file)
 		}
 		return
 	}
@@ -52,7 +52,7 @@ func test(target string, s *statsd.Client, debug bool) {
 	conn, err := net.Dial("tcp", target)
 	if err != nil {
 		if debug {
-			fmt.Println("connect error", target)
+			fmt.Println("connect error:", subhost, port)
 		}
 		s.Inc(fmt.Sprintf("%s.%s.dial_failed", subhost, port), 1, 1)
 		return
