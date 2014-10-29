@@ -57,13 +57,13 @@ func test(target string, s *statsd.Client, debug bool) {
 		s.Inc(fmt.Sprintf("%s.%s.dial_failed", subhost, port), 1, 1)
 		return
 	}
+	conn.Close()
 	duration := time.Since(pre)
 	ms := int64(duration / time.Millisecond)
 	if debug {
 		fmt.Printf("%s.%s.duration %d\n", subhost, port, ms)
 	}
 	s.Timing(fmt.Sprintf("%s.%s", subhost, port), ms, 1)
-	conn.Close()
 }
 
 func main() {
@@ -72,10 +72,11 @@ func main() {
 	var bucket = flag.String("bucket", "smoketcp", "Graphite bucket prefix")
 	var target_file = flag.String("target_file", "targets", "File containing the list of targets, ex: server1:80")
 	var debug = flag.Bool("debug", false, "if true, turn on debugging output")
+	var interval = flag.Int("interval", 10, "How often to run the tests")
 	flag.Parse()
 
 	s, err := statsd.Dial(fmt.Sprintf("%s:%s", *statsd_host, *statsd_port), fmt.Sprintf("%s", *bucket))
 	dieIfError(err)
 	defer s.Close()
-	doEvery(time.Second, process_targets, s, *target_file, *debug)
+	doEvery(time.Duration(*interval)*time.Second, process_targets, s, *target_file, *debug)
 }
