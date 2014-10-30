@@ -11,7 +11,10 @@ Create a "targets" file that looks like:
 <host>:<port>
 ```
 
-then just `go build smoketcp.go` and `./smoketcp --statsd_host <statsd_host> --statsd_port <statsd_port> --bucket <bucket_prefix>`
+then just:
+  `go build smoketcp.go`
+and:
+  `./smoketcp --statsd_host <statsd_host> --statsd_port <statsd_port> --bucket <bucket_prefix>`
 
 The available flags are available with --help:
 ```
@@ -25,9 +28,6 @@ Usage of ./smoketcp:
   -target_file="targets": File containing the list of targets, ex: server1:80
 ```
 
-#Ex: 
-`./smoketcp -- statsd_host statsd.example.com --statsd_port 8125 --bucket Location.for.smokeping.values --interval 1 --target_file /etc/smoketcp_targets.txt`
-
-Every second it tests every entry (in parallel), and reports errors and time-to-connection to statsd.
+Every ten seconds (configurable with --interval) it tests every entry (in parallel), and reports errors and time-to-connection to statsd.
 Statsd then aggregates across the flushInterval (in our case 60s) and stores in graphite per target the errors rate,
 and the mean, lower, upper, upper_90 etc values.
