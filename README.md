@@ -12,11 +12,16 @@ Create a "targets" file that looks like:
 ```
 
 then just:
-  `go build smoketcp.go`
-and:
-  `./smoketcp --statsd_host <statsd_host> --statsd_port <statsd_port> --bucket <bucket_prefix>`
+```
+go build smoketcp.go
+```
 
-The available flags are available with --help:
+and:
+```
+./smoketcp --statsd_host <statsd_host> --statsd_port <statsd_port> --bucket <bucket_prefix>
+```
+
+The flags are available with --help:
 ```
 ./smoketcp --help
 Usage of ./smoketcp:
