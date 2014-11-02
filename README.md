@@ -18,7 +18,7 @@ go build smoketcp.go
 
 and:
 ```
-./smoketcp --statsd_host <statsd_host> --statsd_port <statsd_port> --bucket <bucket_prefix>
+./smoketcp --statsdHost <statsdHost> --statsdPort <statsdPort> --bucket <bucket_prefix>
 ```
 
 The flags are available with --help:
@@ -28,9 +28,9 @@ Usage of ./smoketcp:
   -bucket="smoketcp": Graphite bucket prefix
   -debug=false: if true, turn on debugging output
   -interval=10: How often to run the tests
-  -statsd_host="localhost": Statsd Hostname
-  -statsd_port="8125": Statsd port
-  -target_file="targets": File containing the list of targets, ex: server1:80
+  -statsdHost="localhost": Statsd Hostname
+  -statsdPort="8125": Statsd port
+  -targetFile="targets": File containing the list of targets, ex: server1:80
 ```
 
 Every ten seconds (configurable with --interval) it tests every entry (in parallel), and reports errors and time-to-connection to statsd.

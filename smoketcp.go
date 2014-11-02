@@ -18,18 +18,18 @@ func dieIfError(err error) {
 	}
 }
 
-func doEvery(d time.Duration, f func(*statsd.Client, string, bool), s *statsd.Client, target_file string, debug bool) {
-	f(s, target_file, debug)
+func doEvery(d time.Duration, f func(*statsd.Client, string, bool), s *statsd.Client, targetFile string, debug bool) {
+	f(s, targetFile, debug)
 	for _ = range time.Tick(d) {
-		f(s, target_file, debug)
+		f(s, targetFile, debug)
 	}
 }
 
-func process_targets(s *statsd.Client, target_file string, debug bool) {
-	content, err := ioutil.ReadFile(target_file)
+func processTargets(s *statsd.Client, targetFile string, debug bool) {
+	content, err := ioutil.ReadFile(targetFile)
 	if err != nil {
 		if debug {
-			fmt.Println("couldn't open targets file:", target_file)
+			fmt.Println("couldn't open targets file:", targetFile)
 		}
 		return
 	}
@@ -67,16 +67,16 @@ func test(target string, s *statsd.Client, debug bool) {
 }
 
 func main() {
-	var statsd_host = flag.String("statsd_host", "localhost", "Statsd Hostname")
-	var statsd_port = flag.String("statsd_port", "8125", "Statsd port")
+	var statsdHost = flag.String("statsdHost", "localhost", "Statsd Hostname")
+	var statsdPort = flag.String("statsdPort", "8125", "Statsd port")
 	var bucket = flag.String("bucket", "smoketcp", "Graphite bucket prefix")
-	var target_file = flag.String("target_file", "targets", "File containing the list of targets, ex: server1:80")
+	var targetFile = flag.String("targetFile", "targets", "File containing the list of targets, ex: server1:80")
 	var debug = flag.Bool("debug", false, "if true, turn on debugging output")
 	var interval = flag.Int("interval", 10, "How often to run the tests")
 	flag.Parse()
 
-	s, err := statsd.Dial(fmt.Sprintf("%s:%s", *statsd_host, *statsd_port), fmt.Sprintf("%s", *bucket))
+	s, err := statsd.Dial(fmt.Sprintf("%s:%s", *statsdHost, *statsdPort), fmt.Sprintf("%s", *bucket))
 	dieIfError(err)
 	defer s.Close()
-	doEvery(time.Duration(*interval)*time.Second, process_targets, s, *target_file, *debug)
+	doEvery(time.Duration(*interval)*time.Second, processTargets, s, *targetFile, *debug)
 }
