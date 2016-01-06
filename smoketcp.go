@@ -16,14 +16,14 @@ func dieIfError(err error) {
 		os.Exit(1)
 	}
 }
-func doEvery(d time.Duration, f func(*statsd.Client), s *statsd.Client) {
+func doEvery(d time.Duration, f func(statsd.Statter), s statsd.Statter) {
 	f(s)
 	for _ = range time.Tick(d) {
 		f(s)
 	}
 }
 
-func process_targets(s *statsd.Client) {
+func process_targets(s statsd.Statter) {
 	content, err := ioutil.ReadFile("targets")
 	if err != nil {
 		fmt.Println("couldn't open targets file")
@@ -37,7 +37,7 @@ func process_targets(s *statsd.Client) {
 		go test(target, s)
 	}
 }
-func test(target string, s *statsd.Client) {
+func test(target string, s statsd.Statter) {
 	pre := time.Now()
 	conn, err := net.Dial("tcp", target)
 	if err != nil {
