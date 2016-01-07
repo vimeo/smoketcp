@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/cactus/go-statsd-client/statsd"
 	"io/ioutil"
@@ -16,17 +17,20 @@ func dieIfError(err error) {
 		os.Exit(1)
 	}
 }
-func doEvery(d time.Duration, f func(statsd.Statter), s statsd.Statter) {
-	f(s)
+
+func doEvery(d time.Duration, f func(statsd.Statter, string, bool), s statsd.Statter, targetFile string, debug bool) {
+	f(s, targetFile, debug)
 	for _ = range time.Tick(d) {
-		f(s)
+		f(s, targetFile, debug)
 	}
 }
 
-func process_targets(s statsd.Statter) {
-	content, err := ioutil.ReadFile("targets")
+func processTargets(s statsd.Statter, targetFile string, debug bool) {
+	content, err := ioutil.ReadFile(targetFile)
 	if err != nil {
-		fmt.Println("couldn't open targets file")
+		if debug {
+			fmt.Println("couldn't open targets file:", targetFile)
+		}
 		return
 	}
 	targets := strings.Split(string(content), "\n")
@@ -34,37 +38,44 @@ func process_targets(s statsd.Statter) {
 		if len(target) < 1 {
 			continue
 		}
-		go test(target, s)
+		go test(target, s, debug)
 	}
 }
-func test(target string, s statsd.Statter) {
+
+func test(target string, s statsd.Statter, debug bool) {
+	tuple := strings.Split(target, ":")
+	host := tuple[0]
+	port := tuple[1]
+	subhost := strings.Replace(host, ".", "_", -1)
 	pre := time.Now()
 	conn, err := net.Dial("tcp", target)
 	if err != nil {
-		fmt.Println("connect error", target)
-		s.Inc(fmt.Sprintf("error.%s.dial_failed", target), 1, 1)
+		if debug {
+			fmt.Println("connect error:", subhost, port)
+		}
+		s.Inc(fmt.Sprintf("%s.%s.dial_failed", subhost, port), 1, 1)
 		return
 	}
-	duration := time.Since(pre)
-	tuple := strings.Split(target, ":")
-	host := strings.Replace(tuple[0], ".", "_", -1)
-	port := tuple[1]
-	ms := int64(duration / time.Millisecond)
-	fmt.Printf("%s.%s.duration %d\n", host, port, ms)
-	s.Timing(fmt.Sprintf("dial.%s.%s", host, port), ms, 1)
 	conn.Close()
+	duration := time.Since(pre)
+	ms := int64(duration / time.Millisecond)
+	if debug {
+		fmt.Printf("%s.%s.duration %d\n", subhost, port, ms)
+	}
+	s.Timing(fmt.Sprintf("%s.%s", subhost, port), ms, 1)
 }
 
 func main() {
-	if len(os.Args) == 1 {
-		fmt.Println("Usage: smoketcp <statsd_host>:<statsd_port>")
-		os.Exit(1)
-	}
+	var statsdHost = flag.String("statsdHost", "localhost", "Statsd Hostname")
+	var statsdPort = flag.String("statsdPort", "8125", "Statsd port")
+	var bucket = flag.String("bucket", "smoketcp", "Graphite bucket prefix")
+	var targetFile = flag.String("targetFile", "targets", "File containing the list of targets, ex: server1:80")
+	var debug = flag.Bool("debug", false, "if true, turn on debugging output")
+	var interval = flag.Int("interval", 10, "How often to run the tests")
+	flag.Parse()
 
-	hostname, err := os.Hostname()
-	dieIfError(err)
-	s, err := statsd.Dial(os.Args[1], fmt.Sprintf("smoketcp.%s", hostname))
+	s, err := statsd.Dial(fmt.Sprintf("%s:%s", *statsdHost, *statsdPort), fmt.Sprintf("%s", *bucket))
 	dieIfError(err)
 	defer s.Close()
-	doEvery(time.Second, process_targets, s)
+	doEvery(time.Duration(*interval)*time.Second, processTargets, s, *targetFile, *debug)
 }
